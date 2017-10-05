@@ -1,0 +1,42 @@
+Sub Opening_Procedure()
+
+Dim ws As Worksheet
+Dim pwd As String
+
+'Turns off screen updating
+Application.ScreenUpdating = False
+
+'Makes the Data sheet visible to be used later in process
+'Worksheets("Data Tab").Visible = True
+
+'Unlocks all worksheets
+'pwd = "test" ' Put your password here
+'For Each ws In Worksheets
+'    ws.Unprotect Password:=pwd
+'Next ws
+
+
+
+End Sub
+
+
+
+Sub Closing_Procedure()
+
+Dim ws As Worksheet
+Dim pwd As String
+
+'Hides the Data sheet so that it can only be unhidden with VBA.
+'The sheet will not appear in the unhide option of the User Interface.
+'Worksheets("Data Tab").Visible = xlSheetVeryHidden
+
+'Screen updating is turned back on now that the macro is finished running.
+Application.ScreenUpdating = True
+
+'Locks all worksheets
+'pwd = "test" ' Put your password here
+'For Each ws In Worksheets
+'    ws.Protect Password:=pwd
+'Next ws
+
+End Sub
