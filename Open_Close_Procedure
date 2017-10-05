@@ -40,3 +40,67 @@ Application.ScreenUpdating = True
 'Next ws
 
 End Sub
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+DOCUMENTATION OF THE CODE - DO NOT TRY TO RUN THIS
+
+VBA Code Documentation – Open_Close_Procedure – RCL Library Change Document
+
+Whenever the user grabs the workbook off of the SharePoint and opens it, 
+this procedure runs to make data updates seemless and users can’t manipulate data.
+
+Sub Opening_Procedure()  <- Creating the Opening Procedure
+
+Dim ws As Worksheet <- assigning ws to Worksheet
+Dim pwd As String <- assigning pwd to a string value
+
+'Turns off screen updating
+Application.ScreenUpdating = False
+https://excelribbon.tips.net/T009151_Turning_Off_Screen_Updating.html
+This keeps the screen from looking like a crazy mess as updates are calculated. 
+Otherwise, the screen would be spazzing out during processing.
+
+'Makes the Data sheet visible to be used later in process
+'Worksheets("Data Tab").Visible = True
+https://msdn.microsoft.com/en-us/vba/excel-vba/articles/worksheet-visible-property-excel
+Makes the Data Tab viewable for the user. 
+The data tab is where the future SQL pulls will be storing information to build the user view tables.
+
+
+'Unlocks all worksheets
+'pwd = "test" ' Put your password here <- Set the password
+'For Each ws In Worksheets <- Unprotects all worksheets
+'    ws.Unprotect Password:=pwd <- Unprotects all worksheets
+'Next ws <- Unprotects all worksheets
+
+End Sub <- Ends the creation of the Opening Procedure
+
+‘’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’’
+
+Sub Closing_Procedure() <- Creating the Closing Procedure
+
+Dim ws As Worksheet <- assigning ws to Worksheet
+Dim pwd As String <- assigning pwd to a string value
+
+'Worksheets("Data Tab").Visible = xlSheetVeryHidden
+Hides the Data Sheet so that it can only be unhidden with VBA. 
+The sheet will not appear in the unhide option of the User Interface. 
+This will prevent users from being able to see and change what is 
+pulled from the library and only allows them to perform changes using 
+the workbook’s instructions.
+
+https://www.mrexcel.com/forum/excel-questions/9173-xlsheethidden-vs-xlsheetveryhidden.html
+
+
+
+'Screen updating is turned back on now that the macro is finished running.
+Application.ScreenUpdating = True <- Removes the false screen updating
+
+'Locks all worksheets <- Assigns password to all sheets
+'pwd = "test" ' Put your password here <- Assigns password to all sheets
+'For Each ws In Worksheets <- Protects all worksheets
+'    ws.Protect Password:=pwd <- Protects all worksheets
+'Next ws <- Protects all worksheets
+
+End Sub <- Ends the creation of the Closing Procedure
