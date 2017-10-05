@@ -1,0 +1,257 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'This is needed for the TimeToMillisecond Function below
+Private Type SYSTEMTIME
+    wYear As Integer
+    wMonth As Integer
+    wDayOfWeek As Integer
+    wDay As Integer
+    wHour As Integer
+    wMinute As Integer
+    wSecond As Integer
+    wMilliseconds As Integer
+End Type
+
+Private Declare Sub GetSystemTime Lib "kernel32" _
+(lpSystemTime As SYSTEMTIME)
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Private Sub Auto_Open()
+
+'This funtion automatically runs every time the workbook is opened (This is referred to as a new session in alot of the commenting).
+'The purpose of this funtion is to populate the "Data tab" sheet with information regarding who used
+'the workbook, as well as when they used it.
+
+'In the function located in the Email_Function module, the date and time of when emails were sent is added next to this session information.
+
+Dim Entry As Range
+Dim mode As String
+'Call Opening_Procedure
+Call LudicrousMode(False)
+
+mode = returnUserMode(Environ$("Username"))
+If mode = "SPOC" Or mode = "DEV" Then
+    Call adminMode
+Else
+    Call baseMode
+End If
+
+'template ID is the datetime stamp from the first time the template workbook is opened from sharepoint
+'after the initial opening, the template ID is never updated so it remains consistent through its use
+Call createTemplateID
+
+'saves the user mode to the data tab based on the current user's M0
+Call storeMode
+
+'Set sheets to protect userInterfaceOnly = true
+Sheets("Library View").Protect UserInterfaceOnly:=True, Password:="test"
+
+'This sets a range variable to the time entry for the new session.
+Set Entry = Worksheets("Data Tab").Range("O" & WorksheetFunction.CountA(Worksheets("Data Tab").Range("O:O")) + 2)
+
+'The first entry will be the current user's M0 Number.
+Entry = (Environ$("Username"))
+
+'The entry next to the first will be the date and time that the session began
+Entry.Offset(0, 1) = Format(Now, "dd-mmm-yy h mm am/pm")
+
+'This renames the Email button in the "Library View" sheet. This sub is located in the "Rename_Email_Button" module.
+Call Name_Email_Button
+
+'Call Closing_Procedure
+
+'The sheet "Library View" is activated so it is the sheet that is seen when the workbook is opened.
+Worksheets("Library View").Activate
+
+End Sub
+
+Sub createTemplateID()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("Template ID", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    If dataWS.Range(Col_Letter(startCol) & 3) = "" Then
+        dataWS.Range(Col_Letter(startCol) & 3) = Format(Date, "YYYY-MM-DD") & "-" & TimeToMillisecond
+    End If
+
+End Sub
+
+
+
+Public Function TimeToMillisecond() As String
+    Dim tSystem As SYSTEMTIME
+    Dim sRet
+    
+    On Error Resume Next
+    
+    GetSystemTime tSystem
+    sRet = Hour(Now) & ":" & Minute(Now) & ":" & Second(Now) & _
+    ":" & tSystem.wMilliseconds
+    TimeToMillisecond = sRet
+    
+End Function
+
+Sub storeMode()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Dim i As Integer
+    Dim j As Integer
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    i = 1 'stores the row in the index corresponding to the dataset needed
+    Do While dataIndexWS.Cells(i, 1) <> ""
+        If dataIndexWS.Cells(i, 1) = "User Mode" Then
+            Exit Do
+        End If
+        i = i + 1
+    Loop
+    
+    dataWS.Cells(3, dataIndexWS.Cells(i, 2)) = returnUserMode(Environ$("Username"))
+    
+
+End Sub
+Sub adminMode()
+    Dim objWS As Worksheet
+    Dim riskWS As Worksheet
+    Dim contWS As Worksheet
+    Dim libWS As Worksheet
+    Dim viewWS As Worksheet
+    Set objWS = Sheets("Objectives")
+    Set riskWS = Sheets("Risks")
+    Set contWS = Sheets("Controls")
+    Set libWS = Sheets("Library View")
+    Set viewWS = Sheets("Result View")
+    
+    objWS.Shapes("Check Box 6").Visible = True ' SPOC unhide
+    objWS.Shapes("Check Box 6").ControlFormat.Value = 1 ' Check SPOC checkbox to unhide SPOC cols
+    Call objSPOC_Click
+    riskWS.Shapes("Check Box 15").Visible = True ' SPOC unhide
+    riskWS.Shapes("Check Box 15").ControlFormat.Value = 1 ' Check SPOC checkbox to unhide SPOC cols
+    Call riskSPOC_Click
+    contWS.Shapes("Check Box 10").Visible = True ' SPOC unhide
+    contWS.Shapes("Check Box 10").ControlFormat.Value = 1 ' Check SPOC checkbox to unhide SPOC cols
+    Call controlSPOC_Click
+    libWS.Shapes("Check Box 13").Visible = True ' SPOC unhide
+    libWS.Shapes("Check Box 13").ControlFormat.Value = 1 ' Check SPOC checkbox to unhide SPOC cols
+    Call libSPOC_Click
+
+End Sub
+
+Sub baseMode()
+    Dim objWS As Worksheet
+    Dim riskWS As Worksheet
+    Dim contWS As Worksheet
+    Set objWS = Sheets("Objectives")
+    Set riskWS = Sheets("Risks")
+    Set contWS = Sheets("Controls")
+    
+    objWS.Shapes("Check Box 6").Visible = False ' SPOC hide
+    objWS.Shapes("Check Box 6").ControlFormat.Value = -4146 ' Uncheck SPOC checkbox to hide SPOC cols
+    Call objSPOC_Click
+    riskWS.Shapes("Check Box 15").Visible = False ' SPOC unhide
+    riskWS.Shapes("Check Box 15").ControlFormat.Value = -4146 ' Check SPOC checkbox to unhide SPOC cols
+    Call riskSPOC_Click
+    contWS.Shapes("Check Box 10").Visible = False ' SPOC unhide
+    contWS.Shapes("Check Box 10").ControlFormat.Value = -4146 ' Check SPOC checkbox to unhide SPOC cols
+    Call controlSPOC_Click
+    libWS.Shapes("Check Box 13").Visible = False ' SPOC unhide
+    libWS.Shapes("Check Box 13").ControlFormat.Value = -4146 ' Check SPOC checkbox to unhide SPOC cols
+    Call libSPOC_Click
+
+End Sub
+
+Sub tester() ' just for testing...delete later
+    Dim objWS As Worksheet
+    Dim riskWS As Worksheet
+    Dim contWS As Worksheet
+    Set objWS = Sheets("Objectives")
+    Set riskWS = Sheets("Risks")
+    Set contWS = Sheets("Controls")
+    
+    'objWS.Shapes("Check Box 6").Visible = False ' SPOC hide
+    'objWS.Shapes("Check Box 6").ControlFormat.Value = 1 '-4146 ' Uncheck SPOC checkbox to hide SPOC cols
+
+End Sub
+
+Public Function returnUserMode(M0 As String)
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Dim i As Integer
+    Dim j As Integer
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+        
+    i = 1 'stores the row in the index corresponding to the dataset needed
+    Do While dataIndexWS.Cells(i, 1) <> ""
+        If dataIndexWS.Cells(i, 1) = "Admin Info" Then
+            Exit Do
+        End If
+        i = i + 1
+    Loop
+        
+    j = 1 'stores the row being reviewed in the Data Tab
+    Do While dataWS.Cells(j, dataIndexWS.Cells(i, 2)) <> ""
+        'MsgBox dataWS.Cells(j, dataIndexWS.Cells(i, 2) + 1)
+        If UCase(M0) = dataWS.Cells(j, dataIndexWS.Cells(i, 2) + 1) Then
+            returnUserMode = dataWS.Cells(j, dataIndexWS.Cells(i, 2) + 3)
+            Exit Function
+        End If
+        
+        j = j + 1
+    Loop
+    
+    returnUserMode = "Base User"
+    
+End Function
+
+Function Col_Letter(lngCol As Long) As String
+    Dim vArr
+    vArr = Split(Cells(1, lngCol).Address(True, False), "$")
+    Col_Letter = vArr(0)
+End Function
+
+Sub LudicrousMode(ByVal Toggle As Boolean, Optional ByVal targetWS As Worksheet)
+    Dim ws As Worksheet
+    Dim pwd As String
+    
+    Application.ScreenUpdating = Not Toggle
+'    Application.EnableEvents = Not Toggle
+'    Application.DisplayAlerts = Not Toggle
+    Application.EnableAnimations = Not Toggle
+'    Application.DisplayStatusBar = Not Toggle
+'    Application.PrintCommunication = Not Toggle
+    Application.Calculation = IIf(Toggle, xlCalculationManual, xlCalculationAutomatic)
+    
+    'Unlocks all worksheets
+'    pwd = "test" ' Put your password here
+'    If targetWS Is Nothing Then
+'        If Toggle Then
+'            For Each ws In Worksheets
+'                ws.Unprotect Password:=pwd
+'            Next ws
+'        Else
+'            For Each ws In Worksheets
+'                ws.Protect Password:=pwd
+'            Next ws
+'        End If
+'    Else
+'        If Toggle Then
+'            targetWS.Unprotect Password:=pwd
+'        Else
+'            targetWS.Protect Password:=pwd
+'        End If
+'    End If
+
+End Sub
