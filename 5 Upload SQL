@@ -1,0 +1,137 @@
+Public dataWS As Worksheet
+Public dataIndexWS As Worksheet
+Public objWS As Worksheet
+Public riskWS As Worksheet
+Public contWS As Worksheet
+
+
+Sub uploadObjectives()
+    Dim i As Integer
+    Dim j As Integer
+    Dim SQLstr As String
+    Dim colCount As Long
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    Set objWS = Sheets("Objectives")
+    Set riskWS = Sheets("Risks")
+    Set contWS = Sheets("Controls")
+    i = 0
+    Do While objWS.Cells(11 + i, 1) <> ""
+        SQLstr = "use ERMDB go "
+        If objWS.Cells(11 + i + 1, WorksheetFunction.Match("Delete Objective", objWS.Range("A10:AZ10"), 0)) = "Yes" Then
+            'delete record
+            If Left(objWS.Cells(11 + i, 1), 1) = "N" Then
+                'do nothing - user added new objective and then wanted to delete it so don't upload it.
+            Else
+                SQLstr = SQLstr & "delete from Objectives_Test where Objectives_Primary_Key = " _
+                    & Right(objWS.Cells(11 + i, 1), Len(objWS.Cells(11 + i, 1)) - 1)
+                'UploadERMDB (SQLsrt)
+                MsgBox SQLstr
+            End If
+
+        ElseIf Left(objWS.Cells(11 + i, 1), 1) = "N" Then
+            'insert new record
+                SQLstr = SQLstr & "insert into Objectives_Test ("
+    
+                j = 1
+                Do While objWS.Cells(10, j) <> "Delete Objective"
+                    SQLstr = SQLstr & objWS.Cells(8, j).Value & ", "
+                    j = j + 1
+                Loop
+
+                SQLstr = Left(SQLstr, Len(SQLstr) - 2)
+                SQLstr = SQLstr & ") values ("
+
+                j = 1
+                Do While objWS.Cells(10, j) <> "Delete Objective"
+                    If objWS.Cells(11 + i + 1, j) = "" Then
+                        SQLstr = SQLstr & "null, "
+                    Else
+                        If Left(objWS.Cells(7, j).Value, 3) = "var" Or Left(objWS.Cells(7, j).Value, 3) = "nva" Then
+                            SQLstr = SQLstr & "'" & TextClean(objWS.Cells(11 + i + 1, j).Value) & "', "
+                        ElseIf Left(objWS.Cells(7, j).Value, 3) = "dat" Then
+                            SQLstr = SQLstr & "'" & objWS.Cells(11 + i + 1, j).Value & "', "
+                        Else:
+                            SQLstr = SQLstr & TextClean(objWS.Cells(11 + i + 1, j).Value) & ", "
+                        
+                        End If
+                            
+                    End If
+                    j = j + 1
+                Loop
+                SQLstr = Left(SQLstr, Len(SQLstr) - 2)
+                SQLstr = SQLstr & ")"
+                'Upload(SQLstr)
+                MsgBox SQLstr
+
+        Else
+            'update existing record if there are any changed values
+            colCount = WorksheetFunction.CountA(objWS.Range("10:10")) - 1
+            If WorksheetFunction.CountA(objWS.Range("A" & 11 + i + 1 & ":" & _
+                Col_Letter(colCount) & 11 + i + 1)) > 0 Then
+            
+                SQLstr = SQLstr & "update Objectives_Test set "
+                
+                j = 1
+                Do While objWS.Cells(10, j) <> ""
+                    If objWS.Cells(11 + i + 1, j) = "" Then
+                        'no change for this field so skip it
+                    Else
+                        If Left(objWS.Cells(7, j).Value, 3) = "var" Or Left(objWS.Cells(7, j).Value, 3) = "nva" Then
+                            SQLstr = SQLstr & objWS.Cells(8, j).Value & " = '" & TextClean(objWS.Cells(11 + i + 1, j).Value) & "', "
+                        ElseIf Left(Update.Cells(9 + j, 3).Value, 3) = "dat" Then
+                            SQLstr = SQLstr & objWS.Cells(8, j).Value & " = '" & objWS.Cells(11 + i + 1, j).Value & "', "
+                        Else:
+                            SQLstr = SQLstr & objWS.Cells(8, j).Value & " = " & TextClean(objWS.Cells(11 + i + 1, j).Value) & ", "
+                        End If
+                            
+                    End If
+                    j = j + 1
+                Loop
+                
+                SQLstr = Left(SQLstr, Len(SQLstr) - 2)
+                SQLstr = SQLstr & " ) where Objectives_Primary_Key = " & Right(objWS.Cells(11 + i, 1), _
+                    Len(objWS.Cells(11 + i, 1)) - 1)
+                
+                'UploadERMDB(SQLstr)
+                MsgBox SQLstr
+            End If
+            
+        End If
+        
+        i = i + 2
+    Loop
+    
+    SQLstr = "User ERMDB go update [ERMDB].[dbo].[Objectives_Test] set " _
+        & " Objective_ID = 'O' + ltrim(STR([ERMDB].[dbo].[Objectives_Test].[Objectives_Primary_Key])) " _
+        & " where Objective_ID like 'null%' "
+    'Upload(SQLstr)
+    MsgBox SQLstr
+
+End Sub
+
+Sub uploadRisks()
+
+
+End Sub
+
+Sub uploadControls()
+
+
+End Sub
+
+Public Function TextClean(ByVal strSource As String) As String
+    Dim i As Integer
+    Dim strResult As String
+
+    For i = 1 To Len(strSource)
+        Select Case Asc(Mid(strSource, i, 1))
+            Case 39
+                'If char is single quote then double it to escape the text for SQL
+                strResult = strResult & Mid(strSource, i, 1) & Mid(strSource, i, 1)
+            Case Else ', 65 To 90, 97 To 122: 'include 32 if you want to include space
+                strResult = strResult & Mid(strSource, i, 1)
+        End Select
+    Next
+    TextClean = strResult
+End Function
