@@ -1,0 +1,310 @@
+Sub updateDataIndex()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Dim i As Integer
+    Dim j As Integer
+    Dim missing() As String
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    dataIndexWS.Range("B2:C1000").Clear
+    dataIndexWS.Range("E2:AAA1000").Clear
+    
+    'loop through names in Col A of Data Index tab
+    ' i stores the col A row ref
+    i = 2
+    Do While dataIndexWS.Cells(i, 1) <> ""
+        If IsError(Application.Match(dataIndexWS.Cells(i, 1).Value, dataWS.Range("A1:AAA1"), 0)) Then
+            dataIndexWS.Range("A" & i).Interior.Color = 255
+            MsgBox dataIndexWS.Cells(i, 1) & " was not found in the Data Tab."
+        Else
+            dataIndexWS.Cells(i, 2) = WorksheetFunction.Match(dataIndexWS.Cells(i, 1), dataWS.Range("A1:AAA1"), 0)
+            'loop through dataWS to count number of columns in data range and copy over column headers
+            'j stores the header col ref
+            j = 0
+            Do While dataWS.Cells(2, dataIndexWS.Cells(i, 2) + j) <> ""
+                dataIndexWS.Cells(i, 5 + j) = dataWS.Cells(2, dataIndexWS.Cells(i, 2) + j)
+                
+                j = j + 1
+            Loop
+            dataIndexWS.Cells(i, 3) = j
+            
+        End If
+        
+        i = i + 1
+    Loop
+    
+    
+    'If a name in Col A of index is not found store and product msgbox warning
+    'with missing names
+
+End Sub
+
+Sub queryEMP_MGR()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("EMP / MGR", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCol - 1) & 10000).Clear
+    
+    SQLstr = SQLstr & "SELECT [EMP_Name],[EMP_M0],[EMP_Email]" _
+        & ",[MGR_Name],[MGR_M0],[MGR_Email]" _
+        & "FROM [ERMDB].[dbo].[EMP_MGR]"
+
+    Call QueryERMDB(SQLstr, dataWS.Range(Col_Letter(startCol) & 3), False)
+
+End Sub
+
+Sub queryCO_SPOC()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("CO / SPOC", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCol - 1) & 10000).Clear
+    
+    SQLstr = SQLstr & "SELECT [CO_Name],[CO_M0],[CO_Email],[SPOC],[SPOC_M0]" _
+        & ",[SPOC_Email] FROM [ERMDB].[dbo].[CO_SPOC]"
+
+    Call QueryERMDB(SQLstr, dataWS.Range(Col_Letter(startCol) & 3), False)
+
+End Sub
+
+Sub queryObjectives()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("Objectives", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCol - 1) & 10000).Clear
+    
+    SQLstr = SQLstr & "SELECT [Objectives_Primary_Key],[Objective_ID],[Objective_Description]" _
+        & " ,[Objective_Owner],[Objective_Delegate],[User_Notes],[User_Field_1]" _
+        & " ,[User_Field_2],[Objective_Owner_M0],[Objective_Owner_Delegate_M0]" _
+        & " FROM [ERMDB].[dbo].[Objectives_Test]"
+        
+
+    Call QueryERMDB(SQLstr, dataWS.Range(Col_Letter(startCol) & 3), False)
+
+End Sub
+
+Sub queryRisks()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("Risks", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCol - 1) & 10000).Clear
+    
+    SQLstr = SQLstr & "SELECT [Risks_Primary_Key],[Objective_ID],[Risk_ID],[Risk_Description]" _
+        & " ,[Risk_Owner],[Risk_Description_Detail],[Risk_Owner_Delegate],[User_Notes_R1]" _
+        & " ,[Custom_Risk_ID],[Residual_Risk],[Residual_Risk_Rationale],[Control_Environment]" _
+        & " ,[Control_Environment_Rationale],[Residual_Risk_Dollars]" _
+        & " ,[Severity_Risk_Rating_Custom],[Likelihood_Risk_Rating_Custom]" _
+        & " ,[Inherent_Risk_Score_Custom],[Residual_Risk_Custom],[Risk_Process_ID]" _
+        & " ,[Risk_Primary_Cause],[Ops_Risk_Subtype_Cause],[Comp_Risk_Subtype_Cause]" _
+        & " ,[Risk_Primary_Effect],[Ops_Risk_Subtype_Effect],[Comp_Risk_Subtype_Effect]" _
+        & " ,[Reputational_Flag],[Ops_Basel_Cause_1],[Ops_Basel_Effect_1]" _
+        & " ,[Ops_Basel_Cause_2],[Ops_Basel_Effect_2],[Ops_Basel_Cause_3]" _
+        & " ,[Ops_Basel_Effect_3],[User_Field_1],[User_Field_2]" _
+        & " ,[Risk_Owner_M0],[Risk_Owner_Delegate_M0]" _
+        & " FROM [ERMDB].[dbo].[Risks_Test]"
+        
+
+    Call QueryERMDB(SQLstr, dataWS.Range(Col_Letter(startCol) & 3), False)
+
+End Sub
+
+Sub queryControls()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("Risks", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCol - 1) & 10000).Clear
+    
+    SQLstr = SQLstr & "SELECT [Controls_Primary_key],[Risk_ID],[Control_ID]" _
+        & ",[Control_Description],[Control_Owner],[Control_Effectiveness]" _
+        & ",[Control_Effectiveness_Custom],[Control_Description_Detail]" _
+        & ",[Control_Delegate],[User_notes_C1],[Sox],[Key_Non_Key]" _
+        & ",[Custom_Control_ID],[Control_Frequency],[Control_Nature]" _
+        & ",[Control_Type],[Control_Importance],[Monitoring_Doc_Description]" _
+        & ",[Monitoring_Description_Location],[Monitoring_Doc_Signoff]" _
+        & ",[Monitoring_Doc_Provider],[COSO_Principle_1],[COSO_Principle_2]" _
+        & ",[COSO_Principle_3],[COSO_Principle_4],[COSO_Principle_5]" _
+        & ",[COSO_Principle_6],[COSO_Principle_7],[COSO_Principle_8]" _
+        & ",[COSO_Principle_9],[COSO_Principle_10],[COSO_Principle_11]"
+    SQLstr = SQLstr & ",[COSO_Principle_12],[COSO_Principle_13],[COSO_Principle_14]" _
+        & ",[COSO_Principle_15],[COSO_Principle_16],[COSO_Principle_17]" _
+        & ",[EY_Reference],[Division],[Department],[Unit],[Process]" _
+        & ",[SOC1],[Product],[System],[Regulation],[Control_System]" _
+        & ",[Financial_Category],[Financial_Line_Item]" _
+        & ",[SIW],[Audit_Comments],[Monitoring_Frequency]" _
+        & ",[Date_Last_Monitored],[Date_Last_Attestation]" _
+        & ",[Attestation_Exceptions],[Shared_Service_Scenario]" _
+        & ",[Shared_Service_Group],[Account],[Cost_Center]" _
+        & ",[User_Field_1],[User_Field_2],[Control_Owner_M0]" _
+        & ",[Control_Owner_Delegate_M0]" _
+        & " FROM [ERMDB].[dbo].[Controls_Test]"
+
+    Call QueryERMDB(SQLstr, dataWS.Range(Col_Letter(startCol) & 3), False)
+
+End Sub
+
+Sub queryCOD()
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim queryPosition As Range
+    Dim indexRow As Long
+    Dim numCol As Long
+    Dim startCol As Long
+    Dim SQLstr As String
+    SQLstr = ""
+    
+    indexRow = WorksheetFunction.Match("COD", dataIndexWS.Range("A1:A1000"), 0)
+    numCol = dataIndexWS.Cells(indexRow, 3)
+    startCol = dataIndexWS.Cells(indexRow, 2)
+    
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCol - 1) & 10000).Clear
+    
+    SQLstr = "SELECT Distinct [Control_Delegate] FROM [ERMDB].[dbo].[Controls_Test]"
+
+    Call QueryERMDB(SQLstr, dataWS.Range(Col_Letter(startCol) & 3), False)
+    
+    If dataWS.Range(Col_Letter(startCol) & 3) = "" Then
+        dataWS.Range(Col_Letter(startCol) & 3).Delete Shift:=xlUp
+    End If
+
+End Sub
+
+Sub objID_Desc_List()
+    Dim objWS As Worksheet
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set objWS = Sheets("Objectives")
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim startCol As Long
+    Dim numCols As Long
+    Dim objCount As Integer
+    Dim dataCount As Integer
+    
+    'find starting columns and num of columns in data tab
+    startCol = dataIndexWS.Cells(WorksheetFunction.Match("Objective ID / Description", _
+    dataIndexWS.Columns(1), 0), 2).Value
+    numCols = dataIndexWS.Cells(WorksheetFunction.Match("Objective ID / Description", _
+    dataIndexWS.Columns(1), 0), 3).Value
+
+    'clear previous data
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCols - 1) & 10000).ClearContents
+    
+    objCount = 0
+    dataCount = 3
+    Do While objWS.Cells(11 + objCount, 1) <> ""
+        dataWS.Cells(dataCount, startCol) = objWS.Cells(11 + objCount, 1)
+        dataWS.Cells(dataCount, startCol + 1) = objWS.Cells(11 + objCount, 2)
+        
+        dataCount = dataCount + 1
+        objCount = objCount + 2
+    Loop
+
+End Sub
+
+Sub riskID_Desc_List()
+    Dim riskWS As Worksheet
+    Dim dataWS As Worksheet
+    Dim dataIndexWS As Worksheet
+    Set riskWS = Sheets("Risks")
+    Set dataWS = Sheets("Data Tab")
+    Set dataIndexWS = Sheets("Data Tab Index")
+    
+    Dim startCol As Long
+    Dim numCols As Long
+    Dim riskCount As Integer
+    Dim dataCount As Integer
+    
+    'find starting columns and num of columns in data tab
+    startCol = dataIndexWS.Cells(WorksheetFunction.Match("Risk ID / Description", _
+    dataIndexWS.Columns(1), 0), 2).Value
+    numCols = dataIndexWS.Cells(WorksheetFunction.Match("Risk ID / Description", _
+    dataIndexWS.Columns(1), 0), 3).Value
+
+    'clear previous data
+    dataWS.Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCols - 1) & 10000).ClearContents
+    
+    riskCount = 0
+    dataCount = 3
+    Do While riskWS.Cells(11 + riskCount, 1) <> ""
+        dataWS.Cells(dataCount, startCol) = riskWS.Cells(11 + riskCount, 1)
+        dataWS.Cells(dataCount, startCol + 1) = riskWS.Cells(11 + riskCount, 2)
+
+        dataCount = dataCount + 1
+        riskCount = riskCount + 2
+    Loop
+
+    Range(Col_Letter(startCol) & 3 & ":" & Col_Letter(startCol + numCols - 1) & 10000).RemoveDuplicates Columns:=1, Header:=xlNo
+
+
+End Sub
+
+
