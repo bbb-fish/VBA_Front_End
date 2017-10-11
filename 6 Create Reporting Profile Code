@@ -1,0 +1,118 @@
+
+Public Function M0_Char(Sheet As String, Optional M0_Number As String = "Retrieve Active Users M0 Number")
+
+'This function creates a profile for the user with information about the user,
+'as well as everyone they report to in the RCL change process.
+'The following fields are returned for each person:
+'0)M0 number of employee
+'1)The name of the employee associated with the M0 number.
+'2)The email address of the employee associated with the M0 number.
+'3)Are they a Delegate?
+'4)Are they a Control Owner?
+'5)Are they a SPOC?
+
+Dim D As Worksheet
+Dim EC As Range, CS As Range
+
+Dim M0_Profile()
+
+'It is assumed that the number of levels needed to reach a SPOC user will not be greater than 100.
+ReDim M0_Profile(100, 5)
+
+'The sheet that the hiearchy data is stored on is passed into the function as a parameter.
+Set D = Worksheets(Sheet)
+
+'Where the EMP/MGR table begins
+Set EC = D.Range("H:H")
+
+'Where the CO/SPOC table begins
+Set CS = D.Range("A:A")
+
+i = 0
+'Beginning of the Do...While loop. The condition for stopping the loop is located at the end of the loop.
+Do
+
+If i = 0 Then
+'Enters the M0 number of the user
+If M0_Number = "Retrieve Active Users M0 Number" Then
+    M0_Profile(0, 0) = (Environ$("Username"))
+Else
+    M0_Profile(0, 0) = M0_Number
+End If
+'M0_Profile(0, 0) = "M01834Z" 'Ben Waters
+'M0_Profile(0, 0) = "M0184WB" 'Earl Smith
+Else
+    'Enters the M0 number of the next reported level user
+    If M0_Profile(i - 1, 4) = False Then
+        'If the next level is not a control owner, then pull next M0 number from employee/manager table. This process will
+        'continue returning manager information up the reporting chain until a control owner is reached. If multiple managers
+        'are returned in this process, all of these managers will be CC'd in approval emails generated in the Create_Notification_Email module.
+        M0_Profile(i, 0) = WorksheetFunction.VLookup(M0_Profile(i - 1, 0), D.Range(EC.Offset(0, 1), EC.Offset(0, 5)), 4, False)
+    ElseIf M0_Profile(i - 1, 4) = True Then
+        'If the next level is a control owner and not a SPOC, then pull next M0 number from Control Owner/SPOC table.
+        M0_Profile(i, 0) = WorksheetFunction.VLookup(M0_Profile(i - 1, 0), D.Range(CS.Offset(0, 1), CS.Offset(0, 5)), 4, False)
+    End If
+End If
+
+'Returns the name of the user associated with that M0 number.
+M0_Profile(i, 1) = D.Cells(WorksheetFunction.Match(M0_Profile(i, 0), EC.Offset(0, 1), 0), EC.Column)
+
+'Returns the email address of the user associated with that M0 number.
+M0_Profile(i, 2) = D.Cells(WorksheetFunction.Match(M0_Profile(i, 0), EC.Offset(0, 1), 0), EC.Column + 2)
+
+'Checks to see if the user is a BOKF employee.
+If WorksheetFunction.CountIfs(EC.Offset(0, 1), M0_Profile(i, 0)) > 0 Then
+ M0_Profile(i, 3) = True
+Else
+ M0_Profile(i, 3) = False
+End If
+
+'Checks to see if the user is a Control Owner
+If WorksheetFunction.CountIfs(CS.Offset(0, 1), M0_Profile(i, 0)) > 0 Then
+ M0_Profile(i, 4) = True
+Else
+ M0_Profile(i, 4) = False
+End If
+
+'Checks to see if the user is a SPOC
+If WorksheetFunction.CountIfs(CS.Offset(0, 4), M0_Profile(i, 0)) > 0 Then
+ M0_Profile(i, 5) = True
+Else
+ M0_Profile(i, 5) = False
+End If
+
+'Increment the loop to move to the next reporting level.
+i = i + 1
+
+'Terminates the process when the information of a SPOC has been recorded
+'or when 100 iterations have been realized (iteration bound used to avoid infinite loops in case columns have been moved or something).
+Loop While (M0_Profile(i - 1, 5) <> True And i < 100)
+
+'The intitial M0_Profile that can handle 100 levels is trimmed down to only the levels actually filled in.
+'Also, column labels are included in the trimmed down profile variable.
+Dim M0_Profile_Sized()
+ReDim M0_Profile_Sized(i, 5)
+
+'Copys M0_Profile information in to the trimmed down profile variable.
+For Row = 1 To i
+    For Column = 0 To 5
+        M0_Profile_Sized(Row, Column) = M0_Profile(Row - 1, Column)
+    Next Column
+Next Row
+
+'Includes a labeling row at the top of the trimmed down variable that describes what each column means.
+Labels = Array("M0 Number", "User Name", "Email", "Employee", "Control Owner", "SPOC")
+
+'Inserts this labeling into the trimmed down M0_Profile variable.
+For Column = 0 To 5
+    M0_Profile_Sized(0, Column) = Labels(Column)
+Next Column
+
+'Function returns the new labeled Profile matrix.
+M0_Char = M0_Profile_Sized
+
+
+End Function
+
+
+
