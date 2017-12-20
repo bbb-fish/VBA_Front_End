@@ -1,0 +1,118 @@
+
+' Requires parents on the left (Managers)
+' Children on the right (Employee)
+' Have CEO at the top of list
+' Iterates through and builds tree
+' Data must be on tab 1 starting at A1
+' 
+' Tab 1
+'
+'     A           B
+' 1 Parent      Child
+' 2 No Boss     CEO
+
+
+
+
+' in clsPCNode class module
+
+Public Name As String
+Public Tree As clsPCTree
+
+Public Children As Collection
+
+Function AddChild(ChildsName As String) As clsPCNode
+    Set AddChild = Tree.AddNode(ChildsName)
+    On Error Resume Next
+    Children.Add Item:=AddChild, Key:=AddChild.Name
+    On Error GoTo 0
+End Function
+
+Sub WriteTo(ByRef StartCell As Range)
+    Dim oneChild As clsPCNode
+   
+    StartCell.Value = Me.Name
+    
+    If Children.Count = 0 Then
+        Set StartCell = StartCell.Offset(1, 0)
+    Else
+        Set StartCell = StartCell.Offset(0, 1)
+        For Each oneChild In Children
+            oneChild.WriteTo StartCell
+        Next oneChild
+        Set StartCell = StartCell.Offset(0, -1)
+    End If
+End Sub
+
+Private Sub Class_Initialize()
+    Set Children = New Collection
+End Sub
+
+-----------------------------------------------------
+
+' in clsPCTree class module
+
+Public Nodes As Collection
+
+Function AddNode(NodeName As String) As clsPCNode
+    On Error Resume Next
+    Set AddNode = Nodes(NodeName)
+    If Err Then
+        Set AddNode = New clsPCNode
+        AddNode.Name = NodeName
+        Set AddNode.Tree = Me
+        Nodes.Add Item:=AddNode, Key:=NodeName
+    End If
+    On Error GoTo 0
+End Function
+
+Property Get Count() As Long
+    Count = Nodes.Count
+End Property
+
+Private Sub Class_Initialize()
+    Set Nodes = New Collection
+End Sub
+
+------------------------------------------------------
+
+' in Tree module
+
+Sub test()
+    WriteDownFrom CStr(ParentDataRange.Cells(1, 1)), Range("D1")
+End Sub
+
+Sub WriteDownFrom(ByVal aPerson As String, ByRef WriteTo As Range)
+    Dim Children As Collection
+    Dim oneCell As Range
+    Dim i As Long
+    
+    Set Children = New Collection
+    For Each oneCell In ParentDataRange.Columns(1).Cells
+        If LCase(oneCell.Value) = LCase(aPerson) Then
+            On Error Resume Next
+                Children.Add Item:=oneCell.Offset(0, 1), Key:=CStr(oneCell.Offset(0, 1))
+            On Error GoTo 0
+        End If
+    Next oneCell
+    
+    WriteTo.Value = aPerson
+    
+    If Children.Count = 0 Then
+        Set WriteTo = WriteTo.Offset(1, 0)
+    Else
+        Set WriteTo = WriteTo.Offset(0, 1)
+        For i = 1 To Children.Count
+            WriteDownFrom Children(i), WriteTo
+        Next i
+        Set WriteTo = WriteTo.Offset(0, -1)
+    End If
+    
+End Sub
+
+Function ParentDataRange() As Range
+    With Sheet1.Range("A:A")
+        Set ParentDataRange = Range(.Cells(2, 1), .Cells(Rows.Count, 1).End(xlUp))
+    End With
+    Set ParentDataRange = ParentDataRange.Resize(, 2)
+End Function
